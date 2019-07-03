@@ -1,0 +1,55 @@
+---
+
+- name: Remove given extension from all the files in the given path
+
+  hosts: "{{ ansible_target }}"
+
+  ###connection: local
+
+  vars:
+
+     remote_dirs: "{{ path }}"
+
+  tasks:
+
+    - name: Get the list of file names inside the directory matching the pattern
+
+      shell: "(cd {{ remote_dir }}; find . -maxdepth 1 -name '*{{ ext }}' -type f) | cut -d'/' -f2"
+
+      register: file_to_remove_ext
+
+      changed_when: no
+
+
+
+    - name: Display result
+
+      debug:
+
+          var: file_to_remove_ext
+
+
+
+    - name: extract filename
+
+      shell: basename {{ item }} {{ ext }}
+
+      with_items: "{{ file_to_remove_ext.stdout_lines }}"
+
+      register: file_base_name
+
+
+
+    - name: display file names
+
+      debug:
+
+          var: file_base_name.results
+
+
+
+    - name: Remove extension 
+
+      shell: cd {{ remote_dir }} | mv {{ item.stdout }}{{ ext }} {{ item.stdout }}
+
+      with_items: "{{ file_base_name.results }}"
